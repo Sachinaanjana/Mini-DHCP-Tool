@@ -1,0 +1,32 @@
+import socket
+
+
+available_ips = ["192.168.1.10", "192.168.1.11", "192.168.1.12"]
+assigned_ips = {}
+
+
+server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+server_socket.bind(("0.0.0.0", 20001))
+print("Server is running and waiting for IP requests...")
+
+while True:
+    try:
+        data, client_address = server_socket.recvfrom(1024)
+        request = data.decode()
+
+        if request == "REQUEST_IP":
+            if client_address in assigned_ips:
+                ip = assigned_ips[client_address]
+            elif available_ips:
+                ip = available_ips.pop(0)
+                assigned_ips[client_address] = ip
+            else:
+                ip = "NO_IP_AVAILABLE"
+
+            server_socket.sendto(ip.encode(), client_address)
+            print(f"Client {client_address} assigned IP: {ip}")
+
+    except KeyboardInterrupt:
+        print("Server shutting down.")
+        server_socket.close()
+        break
